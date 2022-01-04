@@ -6,6 +6,15 @@ STARTSCREEN = 0
 PREMENU = 1
 INGAME = 2
 
+NO_BUTTON = 0
+LEFT_MOUSE_BUTTON = 1
+RIGHT_MOUSE_BUTTON = 2
+MIDDLE_MOUSE_BUTTON = 3
+
+NO_WHEEL = 0
+WHEEL_UP = 1
+WHEEL_DOWN = 2
+
 -- TABLES
 objects = {}
 teams = {}
@@ -108,3 +117,19 @@ sandbox_env = {
       	sqrt = math.sqrt, tan = math.tan, tanh = math.tanh },
   	os = { clock = os.clock, difftime = os.difftime, time = os.time },
 }
+
+function setDrawingColorInUnitSpace(r, g, b, a)
+	if type(r) == "table" then
+		love.graphics.setColor(convertToColorInUnitSpace(r[1], r[2], r[3], r[4]))
+	else
+		love.graphics.setColor(convertToColorInUnitSpace(r, g, b, a))
+	end
+end
+
+function convertToColorInUnitSpace(r, g, b, a)
+	if a ~= nil then
+		return {r / 255.0, g / 255.0, b / 255.0, a / 255.0}
+	else
+		return {r / 255.0, g / 255.0, b / 255.0}
+	end
+end

@@ -42,7 +42,7 @@ function love.load()
 	fieldMesh:setTexture(grassTexture)
 
 	-- sounds
-	menuMusic = love.audio.newSource("Assets/menu.mp3")
+	menuMusic = love.audio.newSource("Assets/menu.mp3", "static")
 	menuMusic:setLooping(true)
 	menuMusic:setVolume(0.1)
 	ambienceSound = love.audio.newSource("Assets/ambience1.wav", "static")
@@ -85,12 +85,20 @@ function love.draw()
 	drawUI()
 end
 
-function love.mousepressed(x, y, button)
-	updateUIMousePressed(x,y,button)
+function love.mousepressed(x, y, button, istouch, presses)
+	updateUIMousePressed(x,y,button,WHEEL_NONE)
 end
 
-function love.mousereleased(x, y, button)
+function love.mousereleased(x, y, button, istouch, presses)
 	updateUIMouseReleased(x,y,button)
+end
+
+function love.wheelmoved(x, y)
+	if y > 0 then
+		updateUIMousePressed(x,y,NO_BUTTON,WHEEL_UP)
+	else
+		updateUIMousePressed(x,y,NO_BUTTON,WHEEL_DOWN)
+	end
 end
 
 function vector(x1,y1,x2,y2)
@@ -108,7 +116,7 @@ end
 function love.update(dt)
 	if world then
 		world:update(dt)
-		limitVelocity(400)
+		limitVelocity(400, 800)
 	end
     updateTimers(dt)
 	updateUI(dt)

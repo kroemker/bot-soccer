@@ -22,7 +22,7 @@ local fadingBlack = false
 local fadingData = {}
 local fadeSoundData = {}
 
-function updateUIMousePressed(x,y,button)
+function updateUIMousePressed(x,y,button,wheelmove)
 	if fadingBlack then return end
 	local w,h = love.graphics.getDimensions()
 
@@ -63,7 +63,7 @@ function updateUIMousePressed(x,y,button)
 			end
 		end
 
-		if button == "wu" then
+		if wheelmove == WHEEL_UP then
 			if i > 0 and i < 3 then
 				boxScroll[i] = boxScroll[i] - 1
 				if boxScroll[i] < 1 then boxScroll[i] = 1 end
@@ -77,7 +77,7 @@ function updateUIMousePressed(x,y,button)
 					gameLength = 600
 				end
 			end
-		elseif button == "wd" then
+		elseif wheelmove == WHEEL_DOWN then
 			if i > 0 and i < 3 then
 				boxScroll[i] = boxScroll[i] + 1
 				if boxScroll[i] > (#aiFiles - aiSelectionBoxMaxVisibleItems) then boxScroll[i] = boxScroll[i] - 1 end
@@ -91,7 +91,7 @@ function updateUIMousePressed(x,y,button)
 					gameLength = 10
 				end
 			end
-		elseif button == "l" then
+		elseif button == LEFT_MOUSE_BUTTON then
 			aiSelectionBoxHoverColor = aiSelectionBoxClickColor
 			if i > 0 and i < 3 then
 				clickedAI = selectedAIs
@@ -112,7 +112,7 @@ function updateUIMousePressed(x,y,button)
 
 		end
 	end
-	if (playtime or isGameOver) and button  == "l" then
+	if (playtime or isGameOver) and button  == LEFT_MOUSE_BUTTON then
 		aiSelectionBoxHoverColor = aiSelectionBoxClickColor
 		if hoveredBack then
 			clickedBack = true
@@ -125,7 +125,7 @@ function updateUIMouseReleased(x,y,button)
 	if gameMode == STARTSCREEN then
 		fadeBlack(function() gameMode=PREMENU end, 1)
 	elseif gameMode == PREMENU then
-		if button == "l" then
+		if button == LEFT_MOUSE_BUTTON then
 			aiSelectionBoxHoverColor = aiSelectionBoxHoverColorBk
 			if clickedAI[1] ~= 0 then
 				teamNames[1] = string.sub(aiFiles[clickedAI[1]], 1, string.len(aiFiles[clickedAI[1]])-4)
@@ -141,7 +141,7 @@ function updateUIMouseReleased(x,y,button)
 			end
 		end
 	end
-	if (playtime or isGameOver) and button  == "l" then
+	if (playtime or isGameOver) and button  == LEFT_MOUSE_BUTTON then
 		aiSelectionBoxHoverColor = aiSelectionBoxHoverColorBk
 		if hoveredBack and clickedBack then
 			fadeOffSound(ambienceSound,1)
@@ -183,7 +183,7 @@ function updateUI(dt)
 		v.sound:setVolume(v.startVolume*v.length/v.startLength)
 		if (v.length <= 0) then
 			v.sound:stop()
-			v.sound:rewind()
+			v.sound:seek(0)
 			v.sound:setVolume(v.startVolume)
 		elseif (v.length > v.startLength) then
 			v.sound:setVolume(v.startVolume)
@@ -251,16 +251,16 @@ end
 
 function drawStartScreen()
 	local w,h = love.graphics.getDimensions()
-	love.graphics.setColor(127, math.sin(bannerAnim) * 128 + 127, math.cos(bannerAnim) * 128 + 127, 255)
+	setDrawingColorInUnitSpace(127, math.sin(bannerAnim) * 128 + 127, math.cos(bannerAnim) * 128 + 127, 255)
 	love.graphics.setFont(startScreenFont)
 	local tw,th = love.graphics.getFont():getWidth("BOTSOCCER"),love.graphics.getFont():getHeight("BOTSOCCER")
 	love.graphics.print("BOTSOCCER", w/2-tw/2, h/2-th/2)
 	love.graphics.setFont(mainFont)
-	love.graphics.setColor(255,255,255,127+math.sin(ssAnim)*128)
+	setDrawingColorInUnitSpace(255,255,255,127+math.sin(ssAnim)*128)
 	local tw,th = love.graphics.getFont():getWidth("Press a key"),love.graphics.getFont():getHeight("Press a key")
 	love.graphics.print("Press a key", w/2-tw/2, 3*h/4-th/2)
 	love.graphics.setFont(chatFont)
-	love.graphics.setColor(255,255,255,255)
+	setDrawingColorInUnitSpace(255,255,255,255)
 	local string = "Version " .. tostring(VERSION_MAJOR) .. "." .. tostring(VERSION_MINOR)
 	tw, th = love.graphics.getFont():getWidth(string),love.graphics.getFont():getHeight(string)
 	love.graphics.print(string, w-tw-3, h-th-3)
@@ -270,13 +270,13 @@ end
 function drawFadeBlack()
 	if not fadingBlack then return end
 	local alpha = (-255/(fadingData.length*fadingData.length/4)) * (fadingData.currentTime-fadingData.length/2) * (fadingData.currentTime-fadingData.length/2) + 255
-	love.graphics.setColor(0, 0, 0, alpha)
+	setDrawingColorInUnitSpace(0, 0, 0, alpha)
 	love.graphics.rectangle("fill", 0, 0, love.graphics.getDimensions())
 end
 
 function drawBanner()
 	local w,h = love.graphics.getDimensions()
-	love.graphics.setColor(127, math.sin(bannerAnim) * 128 + 127, math.cos(bannerAnim) * 128 + 127, 255)
+	setDrawingColorInUnitSpace(127, math.sin(bannerAnim) * 128 + 127, math.cos(bannerAnim) * 128 + 127, 255)
 	love.graphics.setFont(goalFontBig)
 	local tw = love.graphics.getFont():getWidth("BOTSOCCER")
 	love.graphics.print("BOTSOCCER", w/2-tw/2, 100)
@@ -291,10 +291,10 @@ function drawPlayingTimeChooser()
 	local x,y = w/2-tw/2, h-aiSelectionBoxDimensions[2]-10-50-th
 	local mx,my = love.mouse.getPosition()
 	if (x < mx and mx < x+tw and y < my and my < y+th) then
-		love.graphics.setColor(100,100,100)
+		setDrawingColorInUnitSpace(100,100,100)
 		love.graphics.print(string, w/2-tw/2+2, h-aiSelectionBoxDimensions[2]-10-50-th+2)
 	end
-	love.graphics.setColor(180,180,180)
+	setDrawingColorInUnitSpace(180,180,180)
 	love.graphics.print(string, w/2-tw/2, h-aiSelectionBoxDimensions[2]-10-50-th)
 	local tw2,th2 = love.graphics.getFont():getWidth("Time"),love.graphics.getFont():getHeight("Time")
 	love.graphics.print("Time", w/2-tw2/2, h-aiSelectionBoxDimensions[2]-10-50-th-10-th2)
@@ -303,12 +303,12 @@ end
 function drawBackground()
 	--for k,v in pairs(bkgLines) do
 		--local x = 1-v.lifetime/v.maxlifetime
-		--love.graphics.setColor(20,20,20, -1020*(x - 0.5)*(x - 0.5) + 255)
+		--setDrawingColorInUnitSpace(20,20,20, -1020*(x - 0.5)*(x - 0.5) + 255)
 		--love.graphics.rectangle("fill",v.position[1], v.position[2], v.length, 3)
 	--end
 	local w,h = love.graphics.getDimensions()
 	local bw,bh = backgroundTexture:getDimensions()
-	love.graphics.setColor(255,255,255,255)
+	setDrawingColorInUnitSpace(255,255,255,255)
 	love.graphics.draw(backgroundTexture, w/2,h/2,math.rad(bkgAnimAngle), 1,1, bw/2,bh/2)
 	--love.graphics.draw(overlayTexture, 0,0)
 end
@@ -318,17 +318,17 @@ function drawStartButton()
 	local mx,my = love.mouse.getPosition()
 	local x,y = w/2-startButtonSize[1]/2,h-100
 	if mx > x and mx < x+startButtonSize[1] and my > y and my < y+startButtonSize[2] then
-		love.graphics.setColor(aiSelectionBoxHoverColor)
+		setDrawingColorInUnitSpace(aiSelectionBoxHoverColor)
 		hoveredStart = true
 	else
-		love.graphics.setColor(100,100,100,35)
+		setDrawingColorInUnitSpace(100,100,100,35)
 		hoveredStart = false
 	end
 	love.graphics.rectangle("fill", x, y, startButtonSize[1], startButtonSize[2])
-	love.graphics.setColor(0,0,0,255)
+	setDrawingColorInUnitSpace(0,0,0,255)
 	love.graphics.rectangle("line", x, y, startButtonSize[1], startButtonSize[2])
 	local tw,th = love.graphics.getFont():getWidth("Start"), love.graphics.getFont():getHeight("Start")
-	love.graphics.setColor(200,200,200,200)
+	setDrawingColorInUnitSpace(200,200,200,200)
 	love.graphics.print("Start", x+startButtonSize[1]/2-tw/2, y+startButtonSize[2]/2-th/2)
 end
 
@@ -337,17 +337,17 @@ function drawBackButton()
 	local mx,my = love.mouse.getPosition()
 	local x,y = 10,h-10-backButtonSize[2]
 	if mx > x and mx < x+backButtonSize[1] and my > y and my < y+backButtonSize[2] then
-		love.graphics.setColor(aiSelectionBoxHoverColor)
+		setDrawingColorInUnitSpace(aiSelectionBoxHoverColor)
 		hoveredBack = true
 	else
-		love.graphics.setColor(100,100,100,35)
+		setDrawingColorInUnitSpace(100,100,100,35)
 		hoveredBack = false
 	end
 	love.graphics.rectangle("fill", x, y, backButtonSize[1], backButtonSize[2])
-	love.graphics.setColor(0,0,0,255)
+	setDrawingColorInUnitSpace(0,0,0,255)
 	love.graphics.rectangle("line", x, y, backButtonSize[1], backButtonSize[2])
 	local tw,th = love.graphics.getFont():getWidth("Back"), love.graphics.getFont():getHeight("Back")
-	love.graphics.setColor(200,200,200,200)
+	setDrawingColorInUnitSpace(200,200,200,200)
 	love.graphics.print("Back", x+backButtonSize[1]/2-tw/2, y+backButtonSize[2]/2-th/2)
 end
 
@@ -355,21 +355,20 @@ function drawTeamNames()
 	love.graphics.setFont(mainFont)
 	local w,h = love.graphics.getDimensions()
 	local x,y = w/2 - love.graphics.getFont():getWidth(teamNames[1])/2, h-aiSelectionBoxDimensions[2]-10+20
-	love.graphics.setColor(0,0,0,255)
+	setDrawingColorInUnitSpace(0,0,0,255)
 	love.graphics.print(teamNames[1],x+2,y+2)
-	--love.graphics.setColor(200,200,200,200)
-	love.graphics.setColor(colors[teamColors[1]])
+	setDrawingColorInUnitSpace(colors[teamColors[1]])
 	love.graphics.print(teamNames[1],x,y)
 	x,y = w/2 - love.graphics.getFont():getWidth("vs")/2, h-aiSelectionBoxDimensions[2]-10+120
-	love.graphics.setColor(0,0,0,255)
+	setDrawingColorInUnitSpace(0,0,0,255)
 	love.graphics.print("vs",x+2,y+2)
-	love.graphics.setColor(200,200,200,200)
+	setDrawingColorInUnitSpace(200,200,200,200)
 	love.graphics.print("vs",x,y)
 	x,y = w/2 - love.graphics.getFont():getWidth(teamNames[2])/2, h-aiSelectionBoxDimensions[2]-10+220
-	love.graphics.setColor(0,0,0,255)
+	setDrawingColorInUnitSpace(0,0,0,255)
 	love.graphics.print(teamNames[2],x+2,y+2)
-	--love.graphics.setColor(200,200,200,200)
-	love.graphics.setColor(colors[teamColors[2]])
+	--setDrawingColorInUnitSpace(200,200,200,200)
+	setDrawingColorInUnitSpace(colors[teamColors[2]])
 	love.graphics.print(teamNames[2],x,y)
 	love.graphics.setFont(mainFont)
 end
@@ -408,15 +407,15 @@ function drawChatWindow()
 	local chatstart = nummsgs-math.floor((h-10-y)/18)
 	if chatstart <= 0 then chatstart = 1 end
 
-	love.graphics.setColor(100,100,100,35)
+	setDrawingColorInUnitSpace(100,100,100,35)
 	love.graphics.rectangle("fill", x-1, y, fieldWidth+2, h-10-y)
-	love.graphics.setColor(0,0,0,255)
+	setDrawingColorInUnitSpace(0,0,0,255)
 	love.graphics.rectangle("line", x-1, y, fieldWidth+2, h-10-y)
 	love.graphics.setFont(chatFont)
 	for i=chatstart, nummsgs do
-		love.graphics.setColor(10,10,10,255)
+		setDrawingColorInUnitSpace(10,10,10,255)
 		love.graphics.print(messages[i].team.name .. ": " .. messages[i].message, 2 + x + 5, 2 + y + 5 + 16 * (i-chatstart))
-		love.graphics.setColor(messages[i].team.color)
+		setDrawingColorInUnitSpace(messages[i].team.color)
 		love.graphics.print(messages[i].team.name .. ": " .. messages[i].message, x + 5, y + 5 + 16 * (i-chatstart))
 	end
 	love.graphics.setFont(mainFont)
@@ -427,18 +426,18 @@ function drawColorSelectBox(x,y)
 	local bw, bh = #colors*itemSize + #colors*spaceX + spaceX, spaceY*2 + itemSize
 	local mx,my = love.mouse.getPosition()
 	x,y = x-bw/2, y-bh/2
-	love.graphics.setColor(0,0,0,70)
+	setDrawingColorInUnitSpace(0,0,0,70)
 	love.graphics.rectangle("fill",x,y,bw,bh)
-	love.graphics.setColor(0,0,0,255)
+	setDrawingColorInUnitSpace(0,0,0,255)
 	love.graphics.rectangle("line",x,y,bw,bh)
 	local currX,currY = x+spaceX, y+spaceY
 	for i=0,#colors-1 do
-		love.graphics.setColor(colors[i+1])
+		setDrawingColorInUnitSpace(colors[i+1])
 		love.graphics.rectangle("fill", currX, currY, itemSize, itemSize)
 		if mx > currX and mx < currX + itemSize and my > currY and my < currY + itemSize then
-			love.graphics.setColor(255,255,255,255)
+			setDrawingColorInUnitSpace(255,255,255,255)
 		else
-			love.graphics.setColor(0,0,0,255)
+			setDrawingColorInUnitSpace(0,0,0,255)
 		end
 		love.graphics.rectangle("line", currX, currY, itemSize, itemSize)
 		currX = currX+itemSize+spaceX
@@ -446,10 +445,10 @@ function drawColorSelectBox(x,y)
 end
 
 function drawAISelectBox(n,x,y,w,h)
-	love.graphics.setColor(20,20,20,100)
+	setDrawingColorInUnitSpace(20,20,20,100)
 	love.graphics.rectangle("fill", x, y, w, h)
-	love.graphics.setColor(0,0,0,255)
-	--love.graphics.setColor(0, math.sin(bannerAnim) * 128 + 127, 0, 255)
+	setDrawingColorInUnitSpace(0,0,0,255)
+	--setDrawingColorInUnitSpace(0, math.sin(bannerAnim) * 128 + 127, 0, 255)
 	love.graphics.rectangle("line", x, y, w, h)
 	local i = 0
 	love.graphics.setFont(chatFont)
@@ -459,16 +458,16 @@ function drawAISelectBox(n,x,y,w,h)
 		local ainame = string.sub(v, 1, string.len(v)-4)
 		local mx,my = love.mouse.getPosition()
 		if mx > x and mx < x + w and my > y + (i-boxScroll[n])*aiSelectionBoxItemHeight and my < y + (i+1-boxScroll[n])*aiSelectionBoxItemHeight then
-			--if love.mouse.isDown("l") then
-			--	love.graphics.setColor(aiSelectionBoxClickColor)
+			--if love.mouse.isDown(LEFT_MOUSE_BUTTON) then
+			--	setDrawingColorInUnitSpace(aiSelectionBoxClickColor)
 			--else
-				love.graphics.setColor(aiSelectionBoxHoverColor)
+				setDrawingColorInUnitSpace(aiSelectionBoxHoverColor)
 			--end
 			love.graphics.rectangle("fill", x+1, y+(i-boxScroll[n])*aiSelectionBoxItemHeight+1, w-2, aiSelectionBoxItemHeight-1)
 			selectedAIs[n] = i
 		end
 		local th = love.graphics.getFont():getHeight(ainame)
-		love.graphics.setColor(200,200,200,255)
+		setDrawingColorInUnitSpace(200,200,200,255)
 		love.graphics.print(ainame, x + 10, y + (aiSelectionBoxItemHeight/2-th/2) + (i-boxScroll[n]) * aiSelectionBoxItemHeight)
 	end
 end
@@ -487,29 +486,29 @@ function drawIngameUI()
 
 	love.graphics.setFont(mainFont)
 	local tw = love.graphics.getFont():getWidth(teams[1].score .. " - " .. teams[2].score)
-	love.graphics.setColor(40,40,40,255)
+	setDrawingColorInUnitSpace(40,40,40,255)
 	love.graphics.print(teams[1].score .. " - " .. teams[2].score, w/2-tw/2+2, 80+2)
-	love.graphics.setColor(200,200,200)
+	setDrawingColorInUnitSpace(200,200,200)
 	love.graphics.print(teams[1].score .. " - " .. teams[2].score, w/2-tw/2, 80)
 
 	local tw2 = love.graphics.getFont():getWidth(teams[1].name)
 	local margin = 50
-	love.graphics.setColor(40,40,40,255)
+	setDrawingColorInUnitSpace(40,40,40,255)
 	love.graphics.print(teams[1].name, w/2-tw/2+2-margin-tw2, 80+2)
-	love.graphics.setColor(200,200,200)
+	setDrawingColorInUnitSpace(200,200,200)
 	love.graphics.print(teams[1].name, w/2-tw/2-margin-tw2, 80)
 
-	love.graphics.setColor(40,40,40,255)
+	setDrawingColorInUnitSpace(40,40,40,255)
 	love.graphics.print(teams[2].name, w/2+tw/2+2+margin, 80+2)
-	love.graphics.setColor(200,200,200)
+	setDrawingColorInUnitSpace(200,200,200)
 	love.graphics.print(teams[2].name, w/2+tw/2+margin, 80)
 
 	local string = playtimeValueToString(getRemainingTime(gameTimer))
 
 	tw = mainFont:getWidth(string)
-	love.graphics.setColor(40,40,40,255)
+	setDrawingColorInUnitSpace(40,40,40,255)
 	love.graphics.print(string, w/2-tw/2+2, 20+2)
-	love.graphics.setColor(200,200,200)
+	setDrawingColorInUnitSpace(200,200,200)
 	love.graphics.print(string, w/2-tw/2, 20)
 
 	if isTimerEnabled(countdownTimer) then
@@ -517,20 +516,20 @@ function drawIngameUI()
 		string = tostring(math.floor(getRemainingTime(countdownTimer)+1))
 		tw = goalFont:getWidth(string)
 		local th = goalFont:getHeight(string)
-		love.graphics.setColor(255,255,255, 255*((getRemainingTime(countdownTimer)-math.floor(getRemainingTime(countdownTimer)))))
+		setDrawingColorInUnitSpace(255,255,255, 255*((getRemainingTime(countdownTimer)-math.floor(getRemainingTime(countdownTimer)))))
 		love.graphics.print(string, w/2-tw/2, h/2-th/2)
 		love.graphics.setFont(mainFont)
 	end
 
 	if isTimerEnabled(goalTimer) then
 		love.graphics.setFont(goalFontBig)
-		love.graphics.setColor(10,10,10)
+		setDrawingColorInUnitSpace(10,10,10)
 		tw = goalFontBig:getWidth("Goal!")
 		local th = goalFontBig:getHeight("Goal!")
 		love.graphics.print("Goal!", w/2-tw/2, h/2-th/2)
 		--
 		--love.graphics.setFont(goalFont)
-		love.graphics.setColor(teams[lastTeamGoal].color)
+		setDrawingColorInUnitSpace(teams[lastTeamGoal].color)
 		--tw = goalFont:getWidth("Goal!")
 		--th = goalFont:getHeight("Goal!")
 		love.graphics.print("Goal!", w/2-tw/2-3, h/2-th/2-3)
@@ -539,7 +538,7 @@ function drawIngameUI()
 	-- Game over
 	if isGameOver then
 		love.graphics.setFont(goalFontBig)
-		love.graphics.setColor(255,255,255)
+		setDrawingColorInUnitSpace(255,255,255)
 		local string = "Draw"
 		if teams[1].score > teams[2].score then
 			string = teams[1].name .. " wins!"

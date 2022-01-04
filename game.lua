@@ -67,18 +67,25 @@ function newGame(team1,team2,team1Color, team2Color)
     continueTimer(countdownTimer)
 end
 
-function limitVelocity(n)
+function limitVelocity(playerLimit, ballLimit)
 	for k,v in pairs(objects.players) do
 		local vx,vy = v.body:getLinearVelocity()
-		local v1,v2 = vx,vy
-		if math.abs(vx) > n then
-			v1 = n * (vx/math.abs(vx))
-		end
-		if math.abs(vy) > 400 then
-			v2 = n * (vy/math.abs(vy))
-		end
-		v.body:setLinearVelocity(v1,v2)
+		vx, vy = limitVector(vx, vy, playerLimit)
+		v.body:setLinearVelocity(vx,vy)
 	end
+
+	local vx,vy = objects.ball.body:getLinearVelocity()
+	vx, vy = limitVector(vx, vy, ballLimit)
+	objects.ball.body:setLinearVelocity(vx,vy)
+end
+
+function limitVector(vx, vy, limit)
+	local squaredLength = vx * vx + vy * vy
+	if squaredLength > limit * limit then
+		local nvx, nvy = normalize(vx, vy)
+		return nvx * limit, nvy * limit
+	end
+	return vx, vy
 end
 
 function calculateCircleBoundaries(segments)
@@ -337,24 +344,24 @@ end
 
 function drawField()
 	-- field
-	--love.graphics.setColor(20,150,20,255)
+	--setDrawingColorInUnitSpace(20,150,20,255)
 	--love.graphics.rectangle("fill", love.graphics.getWidth()/2-fieldWidth/2, love.graphics.getHeight()/2-fieldHeight/2, fieldWidth, fieldHeight)
 	--love.graphics.rectangle("fill", love.graphics.getWidth()/2-fieldWidth/2-goalDepth, love.graphics.getHeight()/2-goalSize/2, goalDepth, goalSize)
 	--love.graphics.rectangle("fill", love.graphics.getWidth()/2+fieldWidth/2, love.graphics.getHeight()/2-goalSize/2, goalDepth, goalSize)
-	love.graphics.setColor(255,255,255,255)
+	setDrawingColorInUnitSpace(255,255,255,255)
 	--love.graphics.draw(grassTexture, fieldQuad, love.graphics.getWidth()/2-fieldWidth/2-goalDepth, love.graphics.getHeight()/2-fieldHeight/2)
 	love.graphics.draw(grassTexture, fieldQuad, love.graphics.getWidth()/2-fieldWidth/2-goalDepth, love.graphics.getHeight()/2-fieldHeight/2-goalDepth)
 	--love.graphics.draw(fieldMesh, 0, 0)
 	--love.graphics.draw(grassTexture, goalQuad, love.graphics.getWidth()/2-fieldWidth/2-goalDepth, love.graphics.getHeight()/2-goalSize/2)
 	--love.graphics.draw(grassTexture, goalQuad, love.graphics.getWidth()/2+fieldWidth/2, love.graphics.getHeight()/2-goalSize/2)
-	--love.graphics.setColor(10,10,10,255)
+	--setDrawingColorInUnitSpace(10,10,10,255)
 	--love.graphics.rectangle("fill", love.graphics.getWidth()/2-fieldWidth/2-goalDepth, love.graphics.getHeight()/2-fieldHeight/2, goalDepth, fieldHeight/2-goalSize/2)
 	--love.graphics.rectangle("fill", love.graphics.getWidth()/2-fieldWidth/2-goalDepth, love.graphics.getHeight()/2+goalSize/2, goalDepth, fieldHeight/2-goalSize/2)
 	--love.graphics.rectangle("fill", love.graphics.getWidth()/2+fieldWidth/2, love.graphics.getHeight()/2-fieldHeight/2, goalDepth, fieldHeight/2-goalSize/2)
 	--love.graphics.rectangle("fill", love.graphics.getWidth()/2+fieldWidth/2, love.graphics.getHeight()/2+goalSize/2, goalDepth, fieldHeight/2-goalSize/2)
 	-- lines on field
 	local w,h  = love.graphics.getDimensions()
-	love.graphics.setColor(255,255,255,180)
+	setDrawingColorInUnitSpace(255,255,255,180)
 	love.graphics.setLineWidth(2)
 	--love.graphics.line(w/2-fieldWidth/2, h/2-fieldHeight/2+slopeOffset, w/2-fieldWidth/2, h/2+fieldHeight/2-slopeOffset, w/2-fieldWidth/2+slopeOffset, h/2+fieldHeight/2,
 	--				   w/2+fieldWidth/2-slopeOffset, h/2+fieldHeight/2, w/2+fieldWidth/2, h/2+fieldHeight/2-slopeOffset, w/2+fieldWidth/2, h/2-fieldHeight/2+slopeOffset,
@@ -366,7 +373,7 @@ function drawField()
 	love.graphics.rectangle("line", w/2+fieldWidth/2, h/2-goalSize/2, goalDepth, goalSize)
 	--love.graphics.rectangle("line", w/2-fieldWidth/2, h/2-blockZoneHeight/2, blockZoneWidth, blockZoneHeight)
 	--love.graphics.rectangle("line", w/2+fieldWidth/2-blockZoneWidth, h/2-blockZoneHeight/2, blockZoneWidth, blockZoneHeight)
-	love.graphics.setColor(255,255,255,255)
+	setDrawingColorInUnitSpace(255,255,255,255)
 	love.graphics.rectangle("fill", w/2-fieldWidth/2-postSize/2, h/2-goalSize/2-postSize/2, postSize, postSize)
 	love.graphics.rectangle("fill", w/2-fieldWidth/2-postSize/2, h/2+goalSize/2-postSize/2, postSize, postSize)
 	love.graphics.rectangle("fill", w/2+fieldWidth/2-postSize/2, h/2-goalSize/2-postSize/2, postSize, postSize)
@@ -376,12 +383,12 @@ function drawField()
 	love.graphics.line(circleBoundaryLeft)
 	love.graphics.line(circleBoundaryRight)
 
-	love.graphics.setColor(0,0,0,255)
+	setDrawingColorInUnitSpace(0,0,0,255)
 	love.graphics.rectangle("line", w/2-fieldWidth/2-goalDepth-1, h/2-fieldHeight/2-goalDepth-1, fieldWidth+2*goalDepth+2, fieldHeight+2*goalDepth+2)
 
 	-- ai marked points
 	for k,v in pairs(objects.players) do
-		love.graphics.setColor(teams[v.team].color)
+		setDrawingColorInUnitSpace(teams[v.team].color)
 		if v.markedPoint[1] > 0 and v.markedPoint[2] > 0 then
 			love.graphics.circle("fill", v.markedPoint[1], v.markedPoint[2], 4)
 		end
@@ -391,20 +398,20 @@ function drawField()
 	end
 
 	-- ball
-	love.graphics.setColor(200,200,200,255)
+	setDrawingColorInUnitSpace(200,200,200,255)
 	love.graphics.setLineWidth(1)
 	love.graphics.circle("fill", objects.ball.body:getX(), objects.ball.body:getY(), objects.ball.shape:getRadius())
-	love.graphics.setColor(10,10,10)
+	setDrawingColorInUnitSpace(10,10,10)
 	love.graphics.circle("line", objects.ball.body:getX(), objects.ball.body:getY(), objects.ball.shape:getRadius())
 
 	-- players
 	for k,v in pairs(objects.players) do
-		love.graphics.setColor(teams[v.team].color)
+		setDrawingColorInUnitSpace(teams[v.team].color)
 		love.graphics.circle("fill", v.body:getX(), v.body:getY(), v.shape:getRadius())
 		if isTimerEnabled(v.shootTimer) then
-			love.graphics.setColor(200,200,200)
+			setDrawingColorInUnitSpace(200,200,200)
 		else
-			love.graphics.setColor(10,10,10)
+			setDrawingColorInUnitSpace(10,10,10)
 		end
 		love.graphics.circle("line", v.body:getX(), v.body:getY(), v.shape:getRadius())
 		love.graphics.setFont(backnumberFont)
@@ -415,7 +422,7 @@ function drawField()
 	-- player names
 	love.graphics.setFont(backnumberFont)
 	for k,v in pairs(objects.players) do
-		love.graphics.setColor(200,200,200)
+		setDrawingColorInUnitSpace(200,200,200)
 		local tnw,tnh = love.graphics.getFont():getWidth(v.name), love.graphics.getFont():getHeight(v.name)
 		love.graphics.print(v.name, v.body:getX()-tnw/2, v.body:getY()-tnh-18)
 	end
